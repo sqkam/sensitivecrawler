@@ -4,14 +4,14 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"github.com/gocolly/colly/v2"
-	"github.com/imthaghost/goclone/pkg/parser"
-	"github.com/sqkam/sensitivecrawler/pkg/sensitivematcher"
 	"io"
 	"net/http"
 	"net/http/cookiejar"
-
 	"strings"
+
+	"github.com/gocolly/colly/v2"
+	"github.com/imthaghost/goclone/pkg/parser"
+	"github.com/sqkam/sensitivecrawler/pkg/sensitivematcher"
 )
 
 type service struct {
@@ -19,26 +19,6 @@ type service struct {
 }
 
 func (s *service) Analyze(url string) {
-
-	fmt.Println("Analyzing --> ", url)
-
-	// get the html body
-	resp, err := http.DefaultClient.Get(url)
-	if err != nil {
-		return
-	}
-	// Closure
-	defer resp.Body.Close()
-
-	respBody, err := io.ReadAll(resp.Body)
-	if err == nil {
-		s.m.Match(respBody, url)
-	}
-
-}
-
-func (s *service) HtmlAnalyze(url string) {
-
 	fmt.Println("Analyzing --> ", url)
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	// get the html body
@@ -53,7 +33,23 @@ func (s *service) HtmlAnalyze(url string) {
 	if err == nil {
 		s.m.Match(respBody, url)
 	}
+}
 
+func (s *service) HtmlAnalyze(url string) {
+	fmt.Println("Analyzing --> ", url)
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	// get the html body
+	resp, err := http.DefaultClient.Get(url)
+	if err != nil {
+		return
+	}
+	// Closure
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err == nil {
+		s.m.Match(respBody, url)
+	}
 }
 
 func (s *service) Run(ctx context.Context) {
@@ -95,7 +91,7 @@ func (s *service) Run(ctx context.Context) {
 		// src attribute
 		link := e.Attr("src")
 		// Print link
-		fmt.Println("Js found", "-->", link)
+		//fmt.Println("Js found", "-->", link)
 		// extraction
 		s.Analyze(e.Request.AbsoluteURL(link))
 	})
@@ -113,7 +109,7 @@ func (s *service) Run(ctx context.Context) {
 		s.Analyze(e.Request.AbsoluteURL(link))
 	})
 
-	//Before making a request
+	// Before making a request
 	c.OnRequest(func(r *colly.Request) {
 		link := r.URL.String()
 		if url == link {
@@ -127,7 +123,6 @@ func (s *service) Run(ctx context.Context) {
 	}
 
 	c.Wait()
-
 }
 
 func NewDefaultService(m sensitivematcher.SensitiveMatcher) Service {

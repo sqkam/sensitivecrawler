@@ -1,16 +1,19 @@
 package sensitivematcher
 
 import (
+	"fmt"
 	regexp "github.com/dlclark/regexp2"
 	"github.com/sqkam/sensitivecrawler/config"
 	"golang.org/x/sync/errgroup"
 )
 import "github.com/fatih/color"
 
-var greenWriter = color.New(color.FgGreen).SprintFunc()
-var yellowWriter = color.New(color.FgYellow).SprintFunc()
-var redWriter = color.New(color.FgRed).SprintFunc()
-var defaultWriter = color.New().SprintFunc()
+var (
+	greenWriter   = color.New(color.FgGreen).SprintFunc()
+	yellowWriter  = color.New(color.FgYellow).SprintFunc()
+	redWriter     = color.New(color.FgRed).SprintFunc()
+	defaultWriter = color.New().SprintFunc()
+)
 
 type sensitiveMatcher struct {
 	rules []config.Rule
@@ -26,8 +29,9 @@ func (m *sensitiveMatcher) Match(b []byte, name string) {
 			if err != nil {
 				return nil
 			}
-			if match != nil && match.GroupCount() > 1 {
-				redWriter(name, " 发现敏感信息 ", v.Name, ": ", match.Groups()[1].String())
+			if match != nil && match.GroupCount() > v.GroupIdx {
+				redWriter(name, " 发现敏感信息 ", v.Name, ": ", match.Groups()[v.GroupIdx].String())
+				fmt.Println(name, " 发现敏感信息 ", v.Name, ": ", match.Groups()[v.GroupIdx].String())
 			}
 			return nil
 		})
