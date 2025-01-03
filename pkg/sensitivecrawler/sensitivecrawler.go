@@ -9,8 +9,9 @@ import (
 	"net/http/cookiejar"
 	"strings"
 
-	"github.com/gocolly/colly/v2"
 	"github.com/imthaghost/goclone/pkg/parser"
+
+	"github.com/gocolly/colly/v2"
 	"github.com/sqkam/sensitivecrawler/pkg/sensitivematcher"
 )
 
@@ -20,7 +21,6 @@ type service struct {
 
 func (s *service) Analyze(url string) {
 	fmt.Println("Analyzing --> ", url)
-	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	// get the html body
 	resp, err := http.DefaultClient.Get(url)
 	if err != nil {
@@ -91,7 +91,7 @@ func (s *service) Run(ctx context.Context) {
 		// src attribute
 		link := e.Attr("src")
 		// Print link
-		//fmt.Println("Js found", "-->", link)
+		// fmt.Println("Js found", "-->", link)
 		// extraction
 		s.Analyze(e.Request.AbsoluteURL(link))
 	})

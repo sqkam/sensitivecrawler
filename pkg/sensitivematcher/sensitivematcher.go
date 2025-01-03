@@ -1,7 +1,6 @@
 package sensitivematcher
 
 import (
-	"fmt"
 	regexp "github.com/dlclark/regexp2"
 	"github.com/sqkam/sensitivecrawler/config"
 	"golang.org/x/sync/errgroup"
@@ -30,8 +29,7 @@ func (m *sensitiveMatcher) Match(b []byte, name string) {
 				return nil
 			}
 			if match != nil && match.GroupCount() > v.GroupIdx {
-				redWriter(name, " 发现敏感信息 ", v.Name, ": ", match.Groups()[v.GroupIdx].String())
-				fmt.Println(name, " 发现敏感信息 ", v.Name, ": ", match.Groups()[v.GroupIdx].String())
+				color.New(color.FgRed).Println(name, " 发现敏感信息 ", v.Name, ": ", match.Groups()[v.GroupIdx].String())
 			}
 			return nil
 		})
