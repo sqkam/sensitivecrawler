@@ -2,71 +2,29 @@ package sensitivecrawler
 
 import (
 	"context"
-	"crypto/tls"
-	"fmt"
-	"io"
-	"net/http"
 	"net/http/cookiejar"
-	"strings"
-
-	"github.com/imthaghost/goclone/pkg/parser"
 
 	"github.com/gocolly/colly/v2"
+	"github.com/sqkam/sensitivecrawler/pkg/sensitivecrawler/callbacker"
+	"github.com/sqkam/sensitivecrawler/pkg/sensitivecrawler/result"
 	"github.com/sqkam/sensitivecrawler/pkg/sensitivematcher"
 )
 
 type service struct {
-	m sensitivematcher.SensitiveMatcher
+	taskCh        chan *task
+	parallelCount int64
+	taskCount     int64
+	m             sensitivematcher.SensitiveMatcher
 }
 
-func (s *service) Analyze(url string) {
-	fmt.Println("Analyzing --> ", url)
-	// get the html body
-	resp, err := http.DefaultClient.Get(url)
-	if err != nil {
-		return
+func (s *service) runTask(ctx context.Context, t *task) {
+	if t.callBacker != nil {
+		t.callBacker.Do(t.callerCh)
 	}
-	// Closure
-	defer resp.Body.Close()
-
-	respBody, err := io.ReadAll(resp.Body)
-	if err == nil {
-		s.m.Match(respBody, url)
-	}
+	t.Run(ctx)
 }
 
-func (s *service) HtmlAnalyze(url string) {
-	fmt.Println("Analyzing --> ", url)
-	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-	// get the html body
-	resp, err := http.DefaultClient.Get(url)
-	if err != nil {
-		return
-	}
-	// Closure
-	defer resp.Body.Close()
-
-	respBody, err := io.ReadAll(resp.Body)
-	if err == nil {
-		s.m.Match(respBody, url)
-	}
-}
-
-func (s *service) Run(ctx context.Context) {
-	url := "http://vcrm.4paradigm.com"
-
-	isValid, isValidDomain := parser.ValidateURL(url), parser.ValidateDomain(url)
-	if !isValid && !isValidDomain {
-		fmt.Printf("%q is not valid", url)
-		return
-	}
-	name := url
-	if isValidDomain {
-		url = parser.CreateURL(name)
-	} else {
-		name = parser.GetDomain(url)
-	}
-
+func (s *service) AddTask(url string, callBacker callbacker.CallBacker) {
 	jar, err := cookiejar.New(&cookiejar.Options{})
 	if err != nil {
 		panic(err)
@@ -75,54 +33,23 @@ func (s *service) Run(ctx context.Context) {
 		colly.Async(true),
 	)
 	c.SetCookieJar(jar)
-
-	// search for all link tags that have a rel attribute that is equal to stylesheet - CSS
-	c.OnHTML("link[rel='stylesheet']", func(e *colly.HTMLElement) {
-		// hyperlink reference
-		link := e.Attr("href")
-		// print css file was found
-		fmt.Println("Css found", "-->", link)
-		// extraction
-		s.Analyze(e.Request.AbsoluteURL(link))
-	})
-
-	// search for all script tags with src attribute -- JS
-	c.OnHTML("script[src]", func(e *colly.HTMLElement) {
-		// src attribute
-		link := e.Attr("src")
-		// Print link
-		// fmt.Println("Js found", "-->", link)
-		// extraction
-		s.Analyze(e.Request.AbsoluteURL(link))
-	})
-
-	// serach for all img tags with src attribute -- Images
-	c.OnHTML("img[src]", func(e *colly.HTMLElement) {
-		// src attribute
-		link := e.Attr("src")
-		if strings.HasPrefix(link, "data:image") || strings.HasPrefix(link, "blob:") {
-			return
-		}
-		// Print link
-		fmt.Println("Img found", "-->", link)
-		// extraction
-		s.Analyze(e.Request.AbsoluteURL(link))
-	})
-
-	// Before making a request
-	c.OnRequest(func(r *colly.Request) {
-		link := r.URL.String()
-		if url == link {
-			s.HtmlAnalyze(link)
-		}
-	})
-
-	// Visit each url and wait for stuff to load :)
-	if err := c.Visit(url); err != nil {
-		return
+	s.taskCh <- &task{
+		site:       url,
+		callBacker: callBacker,
+		m:          s.m,
+		callerCh:   make(chan result.Result, 30),
+		c:          c,
 	}
+}
 
-	c.Wait()
+func (s *service) Run(ctx context.Context) {
+	for range s.parallelCount {
+		go func() {
+			for v := range s.taskCh {
+				s.runTask(ctx, v)
+			}
+		}()
+	}
 }
 
 func NewDefaultService(m sensitivematcher.SensitiveMatcher) Service {

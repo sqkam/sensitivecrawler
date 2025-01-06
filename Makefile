@@ -3,7 +3,7 @@ format:
 
 build:
 	make format
-	go build -ldflags '-w -s' -trimpath github.com/sqkam/sensitivecrawler/cmd/sensitivecrawler
+	go build -ldflags '-w -s' -trimpath github.com/sqkam/sensitivecrawler
 
 run:
 	make build
