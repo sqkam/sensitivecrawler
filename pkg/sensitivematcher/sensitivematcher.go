@@ -47,7 +47,7 @@ func (m *sensitiveMatcher) Match(b []byte, name string) (string, bool) {
 			return nil
 		})
 	}
-	eg.Wait()
+	_ = eg.Wait()
 	close(strCh)
 	<-waitStrCh
 	close(waitStrCh)

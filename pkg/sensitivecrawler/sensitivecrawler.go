@@ -22,6 +22,7 @@ func (s *service) runTask(ctx context.Context, t *task) {
 		t.callBacker.Do(t.callerCh)
 	}
 	t.Run(ctx)
+	close(t.callerCh)
 }
 
 func (s *service) AddTask(url string, callBacker callbacker.CallBacker) {
