@@ -16,19 +16,67 @@ import (
 	"github.com/sqkam/sensitivecrawler/pkg/sensitivematcher"
 )
 
-type task struct {
-	site       string
-	callBacker callbacker.CallBacker
-	m          sensitivematcher.SensitiveMatcher
-	callerCh   chan result.Result
-	c          *colly.Collector
-	urlCount   int64
+type TaskOption interface {
+	Apply(*task)
+}
+type TaskOptionOptionFunc func(*task)
+
+func (f TaskOptionOptionFunc) Apply(t *task) {
+	f(t)
 }
 
-func (t *task) Analyze(url string) {
+func WithCallBacker(c callbacker.CallBacker) TaskOption {
+	return TaskOptionOptionFunc(func(t *task) {
+		t.callBacker = c
+	})
+}
+
+func WithMaxDepth(d int) TaskOption {
+	return TaskOptionOptionFunc(func(t *task) {
+		t.c.MaxDepth = d
+	})
+}
+
+func WithCollyCollector(c *colly.Collector) TaskOption {
+	return TaskOptionOptionFunc(func(t *task) {
+		c.Async = true
+		t.c = c
+	})
+}
+
+// 并发数
+func WithLimitRules(rules []*colly.LimitRule) TaskOption {
+	return TaskOptionOptionFunc(func(h *task) {
+		h.c.Limits(rules)
+	})
+}
+
+func WithTimeOut(t int64) TaskOption {
+	return TaskOptionOptionFunc(func(h *task) {
+		h.timeout = t
+	})
+}
+
+type task struct {
+	site        string
+	callBacker  callbacker.CallBacker
+	m           sensitivematcher.SensitiveMatcher
+	resultMsgCh chan result.Result
+	c           *colly.Collector
+	urlCount    int64
+	timeout     int64
+}
+
+func (t *task) Analyze(ctx context.Context, url string) {
 	fmt.Println("Analyzing --> ", url)
 	// get the html body
-	resp, err := http.DefaultClient.Get(url)
+
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return
+	}
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return
 	}
@@ -39,17 +87,21 @@ func (t *task) Analyze(url string) {
 	if err == nil {
 		matchStr, ok := t.m.Match(respBody, url)
 		if ok {
-			t.callerCh <- result.Result{Site: t.site, Url: url, Info: matchStr}
+			t.resultMsgCh <- result.Result{Site: t.site, Url: url, Info: matchStr}
 		}
 
 	}
 }
 
-func (t *task) HtmlAnalyze(url string) {
+func (t *task) HtmlAnalyze(ctx context.Context, url string) {
 	fmt.Println("Analyzing --> ", url)
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	// get the html body
-	resp, err := http.DefaultClient.Get(url)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return
+	}
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return
 	}
@@ -59,7 +111,7 @@ func (t *task) HtmlAnalyze(url string) {
 	if err == nil {
 		matchStr, ok := t.m.Match(respBody, url)
 		if ok {
-			t.callerCh <- result.Result{Url: url, Info: matchStr}
+			t.resultMsgCh <- result.Result{Url: url, Info: matchStr}
 		}
 	}
 }
@@ -72,6 +124,7 @@ func (t *task) Run(ctx context.Context) {
 		fmt.Printf("%q is not valid", url)
 		return
 	}
+
 	name := url
 	if isValidDomain {
 		url = parser.CreateURL(name)
@@ -86,7 +139,7 @@ func (t *task) Run(ctx context.Context) {
 		// print css file was found
 		fmt.Println("Css found", "-->", link)
 		// extraction
-		t.Analyze(e.Request.AbsoluteURL(link))
+		t.Analyze(ctx, e.Request.AbsoluteURL(link))
 	})
 
 	// search for all script tags with src attribute -- JS
@@ -96,7 +149,7 @@ func (t *task) Run(ctx context.Context) {
 		// Print link
 		// fmt.Println("Js found", "-->", link)
 		// extraction
-		t.Analyze(e.Request.AbsoluteURL(link))
+		t.Analyze(ctx, e.Request.AbsoluteURL(link))
 	})
 
 	// serach for all img tags with src attribute -- Images
@@ -109,7 +162,7 @@ func (t *task) Run(ctx context.Context) {
 		// Print link
 		fmt.Println("Img found", "-->", link)
 		// extraction
-		t.Analyze(e.Request.AbsoluteURL(link))
+		t.Analyze(ctx, e.Request.AbsoluteURL(link))
 	})
 
 	// Before making a request
@@ -117,7 +170,7 @@ func (t *task) Run(ctx context.Context) {
 		atomic.AddInt64(&t.urlCount, 1)
 		link := r.URL.String()
 		if url == link {
-			t.HtmlAnalyze(link)
+			t.HtmlAnalyze(ctx, link)
 		}
 	})
 
@@ -125,6 +178,5 @@ func (t *task) Run(ctx context.Context) {
 	if err := t.c.Visit(url); err != nil {
 		return
 	}
-
 	t.c.Wait()
 }
