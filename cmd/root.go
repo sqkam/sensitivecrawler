@@ -30,7 +30,6 @@ func init() {
 	cobra.OnInitialize(initConfig)
 
 	// cobra.OnInitialize(initLogger)
-
 }
 
 func initFlags() {

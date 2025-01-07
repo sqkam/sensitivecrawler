@@ -2,11 +2,11 @@ package result
 
 type Result struct {
 	// 爬取站点
-	Site string
+	Site string `json:"site,omitempty"`
 	// url
-	Url string
+	Url string `json:"url,omitempty"`
 	// 内存用量
-	MemoryTotal int64
+	MemoryTotal int64 `json:"memory_total,omitempty"`
 	// 敏感信息
-	Info string
+	Info string `json:"info,omitempty"`
 }
