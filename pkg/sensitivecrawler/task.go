@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"sync/atomic"
 
 	"github.com/gocolly/colly/v2"
 	"github.com/imthaghost/goclone/pkg/parser"
@@ -21,6 +22,7 @@ type task struct {
 	m          sensitivematcher.SensitiveMatcher
 	callerCh   chan result.Result
 	c          *colly.Collector
+	urlCount   int64
 }
 
 func (t *task) Analyze(url string) {
@@ -112,6 +114,7 @@ func (t *task) Run(ctx context.Context) {
 
 	// Before making a request
 	t.c.OnRequest(func(r *colly.Request) {
+		atomic.AddInt64(&t.urlCount, 1)
 		link := r.URL.String()
 		if url == link {
 			t.HtmlAnalyze(link)

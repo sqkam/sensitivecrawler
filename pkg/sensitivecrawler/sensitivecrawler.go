@@ -22,6 +22,11 @@ func (s *service) runTask(ctx context.Context, t *task) {
 		t.callBacker.Do(t.callerCh)
 	}
 	t.Run(ctx)
+	// 统计信息
+	t.callerCh <- result.Result{Site: t.site, Url: "", Info: "", Statistics: &result.Statistics{
+		UrlCount: t.urlCount,
+		// MemoryTotal:
+	}}
 	close(t.callerCh)
 }
 
