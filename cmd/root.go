@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"time"
 
@@ -15,8 +16,20 @@ import (
 )
 
 const (
-	appDesc = "sensitivecrawler"
+	appLogo = `
+                                      ███   █████     ███                                                                    ████                    
+                                     ░░░   ░░███     ░░░                                                                    ░░███                    
+  █████   ██████  ████████    █████  ████  ███████   ████  █████ █████  ██████   ██████  ████████   ██████   █████ ███ █████ ░███   ██████  ████████ 
+ ███░░   ███░░███░░███░░███  ███░░  ░░███ ░░░███░   ░░███ ░░███ ░░███  ███░░███ ███░░███░░███░░███ ░░░░░███ ░░███ ░███░░███  ░███  ███░░███░░███░░███
+░░█████ ░███████  ░███ ░███ ░░█████  ░███   ░███     ░███  ░███  ░███ ░███████ ░███ ░░░  ░███ ░░░   ███████  ░███ ░███ ░███  ░███ ░███████  ░███ ░░░ 
+ ░░░░███░███░░░   ░███ ░███  ░░░░███ ░███   ░███ ███ ░███  ░░███ ███  ░███░░░  ░███  ███ ░███      ███░░███  ░░███████████   ░███ ░███░░░   ░███     
+ ██████ ░░██████  ████ █████ ██████  █████  ░░█████  █████  ░░█████   ░░██████ ░░██████  █████    ░░████████  ░░████░████    █████░░██████  █████    
+░░░░░░   ░░░░░░  ░░░░ ░░░░░ ░░░░░░  ░░░░░    ░░░░░  ░░░░░    ░░░░░     ░░░░░░   ░░░░░░  ░░░░░      ░░░░░░░░    ░░░░ ░░░░    ░░░░░  ░░░░░░  ░░░░░
+`
+	appDesc = "a powerful, lightning and fast sensitive information detection tools"
 )
+
+var appAboutLong = fmt.Sprintf("%s\n%s", appLogo, appDesc)
 
 var (
 	cfgFile                              string
@@ -28,7 +41,7 @@ var (
 	rootCmd                              = &cobra.Command{
 		Use:   "sensitivecrawler",
 		Short: appDesc,
-		Long:  appDesc + "long",
+		Long:  appAboutLong,
 		Run:   run,
 	}
 )
@@ -45,7 +58,7 @@ func initFlags() {
 	rootCmd.PersistentFlags().StringVarP(&site, "site", "s", "", "site to scan")
 	rootCmd.PersistentFlags().StringVarP(&httpCallBackerUrl, "httpCallBackerUrl", "", "", "httpCallBackerUrl")
 	rootCmd.PersistentFlags().StringVarP(&retryableHttpCallBackerUrl, "retryableHttpCallBackerUrl", "", "", "retryableHttpCallBackerUrl")
-	rootCmd.PersistentFlags().Int64VarP(&retryableHttpCallBackerRetryCount, "retryableHttpCallBackerRetryCount", "", 3, " set retryableHttpCallBackerRetryCount second")
+	rootCmd.PersistentFlags().Int64VarP(&retryableHttpCallBackerRetryCount, "retryableHttpCallBackerRetryCount", "", 3, "set retryableHttpCallBackerRetryCount second")
 	rootCmd.PersistentFlags().Int64VarP(&retryableHttpCallBackerRetryInterval, "retryableHttpCallBackerRetryInterval", "", 3, "retryableHttpCallBackerRetryInterval")
 }
 
