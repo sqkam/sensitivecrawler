@@ -76,12 +76,16 @@ func (t *task) Analyze(ctx context.Context, url string) {
 
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
+		log.Println("Analyze NewRequestWithContext error ", err.Error())
 		return
+
 	}
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
+		log.Println("Analyze  http.DefaultClient.Do error ", err.Error())
 		return
+
 	}
 	// Closure
 	defer resp.Body.Close()
@@ -102,6 +106,7 @@ func (t *task) Analyze(ctx context.Context, url string) {
 
 func (t *task) HtmlAnalyze(ctx context.Context, url string) {
 	fmt.Println("Analyzing --> ", url)
+	//
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	// get the html body
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
