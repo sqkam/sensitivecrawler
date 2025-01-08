@@ -1,4 +1,4 @@
-package http
+package retryablehttpcallbacker
 
 import (
 	"bytes"
@@ -12,46 +12,46 @@ import (
 )
 
 type Option interface {
-	Apply(*httpCallBacker)
+	Apply(*retryAbleHttpCallBacker)
 }
-type OptionFunc func(*httpCallBacker)
+type OptionFunc func(*retryAbleHttpCallBacker)
 
-func (f OptionFunc) Apply(h *httpCallBacker) {
+func (f OptionFunc) Apply(h *retryAbleHttpCallBacker) {
 	f(h)
 }
 
 func WithHttpClient(c *http.Client) Option {
-	return OptionFunc(func(h *httpCallBacker) {
+	return OptionFunc(func(h *retryAbleHttpCallBacker) {
 		h.client = c
 	})
 }
 
 func WithRetryMax(c int64) Option {
-	return OptionFunc(func(h *httpCallBacker) {
+	return OptionFunc(func(h *retryAbleHttpCallBacker) {
 		h.retryMax = c
 	})
 }
 
 func WithRetryInterval(t time.Duration) Option {
-	return OptionFunc(func(h *httpCallBacker) {
+	return OptionFunc(func(h *retryAbleHttpCallBacker) {
 		h.retryInterval = t
 	})
 }
 
-type httpCallBacker struct {
+type retryAbleHttpCallBacker struct {
 	url           string
 	client        *http.Client
 	retryMax      int64
 	retryInterval time.Duration
 }
 
-func (c *httpCallBacker) Do(ch <-chan result.Result) {
+func (c *retryAbleHttpCallBacker) Do(ch <-chan result.Result) {
 	for r := range ch {
 		go c.doCallback(r)
 	}
 }
 
-func (c *httpCallBacker) doCallbackOnce(r result.Result) error {
+func (c *retryAbleHttpCallBacker) doCallbackOnce(r result.Result) error {
 	b := new(bytes.Buffer)
 	if err := json.NewEncoder(b).Encode(r); err != nil {
 		return err
@@ -70,7 +70,7 @@ func (c *httpCallBacker) doCallbackOnce(r result.Result) error {
 	return nil
 }
 
-func (c *httpCallBacker) doCallback(r result.Result) {
+func (c *retryAbleHttpCallBacker) doCallback(r result.Result) {
 	for range c.retryMax {
 		err := c.doCallbackOnce(r)
 		if err == nil {
@@ -81,8 +81,8 @@ func (c *httpCallBacker) doCallback(r result.Result) {
 	}
 }
 
-func NewHttpCallBacker(url string, options ...Option) callbacker.CallBacker {
-	h := &httpCallBacker{
+func New(url string, options ...Option) callbacker.CallBacker {
+	h := &retryAbleHttpCallBacker{
 		url:           url,
 		client:        http.DefaultClient,
 		retryMax:      5,

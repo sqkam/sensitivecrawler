@@ -6,7 +6,10 @@ import (
 )
 
 func InitConfig() config.Config {
-	var conf config.Config
+	// default config
+	conf := config.Config{
+		ParallelCount: 5,
+	}
 	if err := viper.ReadInConfig(); err != nil {
 		panic(err)
 	}

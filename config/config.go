@@ -7,5 +7,6 @@ type Rule struct {
 }
 
 type Config struct {
-	Rules []Rule `mapstructure:"rules"`
+	ParallelCount int64  `mapstructure:"parallel_count"`
+	Rules         []Rule `mapstructure:"rules"`
 }

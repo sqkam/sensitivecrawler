@@ -5,25 +5,29 @@ import (
 	"net/url"
 	"time"
 
+	printcallbacker "github.com/sqkam/sensitivecrawler/pkg/sensitivecrawler/callbacker/print"
+
+	"github.com/sqkam/sensitivecrawler/config"
+
 	"github.com/gocolly/colly/v2"
 	"github.com/gocolly/colly/v2/extensions"
-	print2 "github.com/sqkam/sensitivecrawler/pkg/sensitivecrawler/callbacker/print"
+
 	"github.com/sqkam/sensitivecrawler/pkg/sensitivecrawler/result"
 	"github.com/sqkam/sensitivecrawler/pkg/sensitivematcher"
 )
 
 type service struct {
-	taskCh        chan *task
-	parallelCount int64
-	taskCount     int64
-	m             sensitivematcher.SensitiveMatcher
+	parallelCount  int64
+	m              sensitivematcher.SensitiveMatcher
+	totalTaskCount int64
+	taskCh         chan *task
 }
 
-func NewDefaultService(m sensitivematcher.SensitiveMatcher) Service {
+func NewDefaultService(c config.Config, m sensitivematcher.SensitiveMatcher) Service {
 	return &service{
+		parallelCount: c.ParallelCount,
 		m:             m,
 		taskCh:        make(chan *task, 10),
-		parallelCount: 5,
 	}
 }
 
@@ -62,7 +66,7 @@ func (s *service) AddTask(site string, options ...TaskOption) {
 	t := &task{
 		site:        site,
 		m:           s.m,
-		callBacker:  print2.NewPrintCallBacker(),
+		callBacker:  printcallbacker.New(),
 		resultMsgCh: make(chan result.Result, 30),
 		c:           c,
 	}

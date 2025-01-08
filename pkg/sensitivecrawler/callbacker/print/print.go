@@ -1,4 +1,4 @@
-package print
+package printcallbacker
 
 import (
 	"fmt"
@@ -19,6 +19,6 @@ func (c *printCallBacker) doCallback(r result.Result) {
 	fmt.Printf("%v\n", r.Info)
 }
 
-func NewPrintCallBacker() callbacker.CallBacker {
+func New() callbacker.CallBacker {
 	return &printCallBacker{}
 }

@@ -1,4 +1,4 @@
-package http
+package httpcallbacker
 
 import (
 	"bytes"
@@ -57,7 +57,7 @@ func (c *httpCallBacker) doCallback(r result.Result) {
 	}
 }
 
-func NewHttpCallBacker(url string, options ...Option) callbacker.CallBacker {
+func New(url string, options ...Option) callbacker.CallBacker {
 	h := &httpCallBacker{
 		url:    url,
 		client: http.DefaultClient,
