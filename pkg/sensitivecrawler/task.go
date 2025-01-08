@@ -87,7 +87,7 @@ func (t *task) Analyze(ctx context.Context, url string) {
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err == nil {
-		matchStrings := t.m.Match(respBody, url)
+		matchStrings := t.m.Match(respBody)
 		if len(matchStrings) > 0 {
 			atomic.AddInt64(&t.sensitiveCount, int64(len(matchStrings)))
 			for _, matchStr := range matchStrings {
@@ -101,6 +101,7 @@ func (t *task) Analyze(ctx context.Context, url string) {
 
 func (t *task) HtmlAnalyze(ctx context.Context, url string) {
 	fmt.Println("Analyzing --> ", url)
+
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	// get the html body
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
@@ -115,7 +116,7 @@ func (t *task) HtmlAnalyze(ctx context.Context, url string) {
 	defer resp.Body.Close()
 	respBody, err := io.ReadAll(resp.Body)
 	if err == nil {
-		matchStrings := t.m.Match(respBody, url)
+		matchStrings := t.m.Match(respBody)
 		if len(matchStrings) > 0 {
 			atomic.AddInt64(&t.sensitiveCount, int64(len(matchStrings)))
 			for _, matchStr := range matchStrings {

@@ -85,7 +85,7 @@ func run(cmd *cobra.Command, args []string) {
 	}
 	if retryableHttpCallBackerUrl != "" {
 		options = append(options, sensitivecrawler.WithCallBacker(retryablehttpcallbacker.New(
-			httpCallBackerUrl,
+			retryableHttpCallBackerUrl,
 			retryablehttpcallbacker.WithRetryMax(retryableHttpCallBackerRetryCount),
 			retryablehttpcallbacker.WithRetryInterval(time.Duration(retryableHttpCallBackerRetryInterval)*time.Second),
 		)))
@@ -93,7 +93,7 @@ func run(cmd *cobra.Command, args []string) {
 	if site == "" {
 		panic(errors.New("please input site"))
 	}
-	s.AddTask(site)
+	s.AddTask(site, options...)
 
 	s.RunOneTask(ctx)
 }

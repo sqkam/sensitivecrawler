@@ -20,7 +20,7 @@ type sensitiveMatcher struct {
 	rules []config.Rule
 }
 
-func (m *sensitiveMatcher) Match(b []byte, name string) []string {
+func (m *sensitiveMatcher) Match(b []byte) []string {
 	var eg errgroup.Group
 	var result []string
 
@@ -41,7 +41,7 @@ func (m *sensitiveMatcher) Match(b []byte, name string) []string {
 				return nil
 			}
 			if match != nil && match.GroupCount() > v.GroupIdx {
-				strCh <- fmt.Sprintln(name, " 发现敏感信息 ", v.Name, ": ", match.Groups()[v.GroupIdx].String())
+				strCh <- fmt.Sprintf("发现敏感信息 %s: %s", v.Name, match.Groups()[v.GroupIdx].String())
 			}
 			return nil
 		})

@@ -1,5 +1,5 @@
 package sensitivematcher
 
 type SensitiveMatcher interface {
-	Match(b []byte, name string) (matchStrings []string)
+	Match(b []byte) (matchStrings []string)
 }
