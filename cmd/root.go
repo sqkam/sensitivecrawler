@@ -39,7 +39,7 @@ var (
 	retryableHttpCallBackerRetryCount    int64
 	retryableHttpCallBackerRetryInterval int64
 	rootCmd                              = &cobra.Command{
-		Use:   "sensitivecrawler",
+		Use:   "sensitivecrawler site",
 		Short: appDesc,
 		Long:  appAboutLong,
 		Run:   run,
@@ -55,7 +55,6 @@ func init() {
 
 func initFlags() {
 	rootCmd.PersistentFlags().StringVarP(&cfgFile, "conf", "c", "", "path of config file")
-	rootCmd.PersistentFlags().StringVarP(&site, "site", "s", "", "site to scan")
 	rootCmd.PersistentFlags().StringVarP(&httpCallBackerUrl, "httpCallBackerUrl", "", "", "httpCallBackerUrl")
 	rootCmd.PersistentFlags().StringVarP(&retryableHttpCallBackerUrl, "retryableHttpCallBackerUrl", "", "", "retryableHttpCallBackerUrl")
 	rootCmd.PersistentFlags().Int64VarP(&retryableHttpCallBackerRetryCount, "retryableHttpCallBackerRetryCount", "", 3, "set retryableHttpCallBackerRetryCount second")
@@ -76,6 +75,10 @@ func initConfig() {
 }
 
 func run(cmd *cobra.Command, args []string) {
+	if len(args) < 1 {
+		panic(errors.New("please input site"))
+	}
+	site = args[0]
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	s := InitSensitiveCrawler()
@@ -90,9 +93,7 @@ func run(cmd *cobra.Command, args []string) {
 			retryablehttpcallbacker.WithRetryInterval(time.Duration(retryableHttpCallBackerRetryInterval)*time.Second),
 		)))
 	}
-	if site == "" {
-		panic(errors.New("please input site"))
-	}
+
 	s.AddTask(site, options...)
 
 	s.RunOneTask(ctx)

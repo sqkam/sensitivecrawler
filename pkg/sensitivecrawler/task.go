@@ -10,8 +10,9 @@ import (
 	"strings"
 	"sync/atomic"
 
+	"github.com/fatih/color"
+
 	"github.com/gocolly/colly/v2"
-	"github.com/imthaghost/goclone/pkg/parser"
 	"github.com/sqkam/sensitivecrawler/pkg/sensitivecrawler/callbacker"
 	"github.com/sqkam/sensitivecrawler/pkg/sensitivecrawler/result"
 	"github.com/sqkam/sensitivecrawler/pkg/sensitivematcher"
@@ -71,7 +72,7 @@ type task struct {
 }
 
 func (t *task) Analyze(ctx context.Context, url string) {
-	fmt.Println("Analyzing --> ", url)
+	color.New(color.FgYellow).Println("Analyzing --> ", url)
 	// get the html body
 
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
@@ -105,7 +106,7 @@ func (t *task) Analyze(ctx context.Context, url string) {
 }
 
 func (t *task) HtmlAnalyze(ctx context.Context, url string) {
-	fmt.Println("Analyzing --> ", url)
+	color.New(color.FgYellow).Println("Analyzing --> ", url)
 	//
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	// get the html body
@@ -136,26 +137,14 @@ func (t *task) HtmlAnalyze(ctx context.Context, url string) {
 
 func (t *task) Run(ctx context.Context) {
 	url := t.site
-	// url := "https://zgo.sqkam.cfd"
-	isValid, isValidDomain := parser.ValidateURL(url), parser.ValidateDomain(url)
-	if !isValid && !isValidDomain {
-		fmt.Printf("%q is not valid", url)
-		return
-	}
 
-	name := url
-	if isValidDomain {
-		url = parser.CreateURL(name)
-	} else {
-		name = parser.GetDomain(url)
-	}
 	t.c.OnHTML("a[href]", func(e *colly.HTMLElement) {
 		link := e.Attr("href")
 		if link == "" {
 			return
 		}
 		// Print link
-		fmt.Printf("Link found: %q -> %s\n", e.Text, link)
+		color.New(color.FgYellow).Printf("Link found: %q -> %s\n", e.Text, link)
 		// Visit link found on page
 		// Only those links are visited which are in AllowedDomains
 		err := t.c.Visit(e.Request.AbsoluteURL(link))
@@ -165,8 +154,7 @@ func (t *task) Run(ctx context.Context) {
 	t.c.OnHTML("link[rel='stylesheet']", func(e *colly.HTMLElement) {
 		// hyperlink reference
 		link := e.Attr("href")
-		// print css file was found
-		fmt.Println("Css found", "-->", link)
+		color.New(color.FgYellow).Println("Css found", "-->", link)
 		// extraction
 		t.Analyze(ctx, e.Request.AbsoluteURL(link))
 	})
@@ -176,7 +164,7 @@ func (t *task) Run(ctx context.Context) {
 		// src attribute
 		link := e.Attr("src")
 		// Print link
-		// fmt.Println("Js found", "-->", link)
+		color.New(color.FgYellow).Println("Js found", "-->", link)
 		// extraction
 		t.Analyze(ctx, e.Request.AbsoluteURL(link))
 	})
@@ -189,7 +177,7 @@ func (t *task) Run(ctx context.Context) {
 			return
 		}
 		// Print link
-		fmt.Println("Img found", "-->", link)
+		color.New(color.FgYellow).Println("img found", "-->", link)
 		// extraction
 		t.Analyze(ctx, e.Request.AbsoluteURL(link))
 	})

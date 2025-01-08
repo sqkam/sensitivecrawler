@@ -3,8 +3,9 @@ package sensitivecrawler
 import (
 	"context"
 	"fmt"
-	"net/url"
 	"time"
+
+	"github.com/imthaghost/goclone/pkg/parser"
 
 	printcallbacker "github.com/sqkam/sensitivecrawler/pkg/sensitivecrawler/callbacker/print"
 
@@ -58,16 +59,25 @@ func (s *service) runTask(ctx context.Context, t *task) {
 }
 
 func (s *service) AddTask(site string, options ...TaskOption) {
+	// url := "https://zgo.sqkam.cfd"
+	isValid, isValidDomain := parser.ValidateURL(site), parser.ValidateDomain(site)
+	if !isValid && !isValidDomain {
+		fmt.Printf("%q is not valid", site)
+		return
+	}
+
+	domain := site
+	if isValidDomain {
+		site = parser.CreateURL(domain)
+	} else {
+		domain = parser.GetDomain(site)
+	}
 	c := colly.NewCollector(
 		colly.Async(true),
 	)
 	extensions.RandomUserAgent(c)
-	u, err := url.Parse(site)
-	if err != nil {
-		return
-	}
-	c.AllowedDomains = []string{u.Hostname()}
-	_ = u
+
+	c.AllowedDomains = []string{domain}
 
 	t := &task{
 		site:        site,
