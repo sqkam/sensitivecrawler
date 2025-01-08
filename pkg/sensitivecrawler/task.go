@@ -33,6 +33,12 @@ func WithCallBacker(c callbacker.CallBacker) TaskOption {
 	})
 }
 
+func WithAllowedDomains(d []string) TaskOption {
+	return TaskOptionOptionFunc(func(t *task) {
+		t.c.AllowedDomains = append(t.c.AllowedDomains, d...)
+	})
+}
+
 func WithMaxDepth(d int) TaskOption {
 	return TaskOptionOptionFunc(func(t *task) {
 		t.c.MaxDepth = d
@@ -193,6 +199,7 @@ func (t *task) Run(ctx context.Context) {
 
 	// Visit each url and wait for stuff to load :)
 	if err := t.c.Visit(url); err != nil {
+		fmt.Printf("%v\n", err)
 		return
 	}
 	t.c.Wait()

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/spf13/viper"
@@ -33,6 +34,7 @@ var appAboutLong = fmt.Sprintf("%s\n%s", appLogo, appDesc)
 
 var (
 	cfgFile                              string
+	allowedDomains                       string
 	site                                 string
 	httpCallBackerUrl                    string
 	retryableHttpCallBackerUrl           string
@@ -55,6 +57,8 @@ func init() {
 
 func initFlags() {
 	rootCmd.PersistentFlags().StringVarP(&cfgFile, "conf", "c", "", "path of config file")
+	rootCmd.PersistentFlags().StringVarP(&allowedDomains, "allowedDomains", "d", "", "allowedDomains separated by commas")
+	rootCmd.PersistentFlags().StringVarP(&allowedDomains, "depth", "", "", "allowedDomains separated by commas")
 	rootCmd.PersistentFlags().StringVarP(&httpCallBackerUrl, "httpCallBackerUrl", "", "", "httpCallBackerUrl")
 	rootCmd.PersistentFlags().StringVarP(&retryableHttpCallBackerUrl, "retryableHttpCallBackerUrl", "", "", "retryableHttpCallBackerUrl")
 	rootCmd.PersistentFlags().Int64VarP(&retryableHttpCallBackerRetryCount, "retryableHttpCallBackerRetryCount", "", 3, "set retryableHttpCallBackerRetryCount second")
@@ -83,6 +87,9 @@ func run(cmd *cobra.Command, args []string) {
 	defer cancel()
 	s := InitSensitiveCrawler()
 	options := []sensitivecrawler.TaskOption{}
+
+	options = append(options, sensitivecrawler.WithAllowedDomains(strings.Split(allowedDomains, ",")))
+	options = append(options, sensitivecrawler.WithMaxDepth(1))
 	if httpCallBackerUrl != "" {
 		options = append(options, sensitivecrawler.WithCallBacker(httpcallbacker.New(httpCallBackerUrl)))
 	}
