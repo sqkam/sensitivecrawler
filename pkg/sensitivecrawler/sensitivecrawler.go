@@ -19,9 +19,20 @@ type service struct {
 	m             sensitivematcher.SensitiveMatcher
 }
 
+func NewDefaultService(m sensitivematcher.SensitiveMatcher) Service {
+	return &service{
+		m:             m,
+		taskCh:        make(chan *task, 10),
+		parallelCount: 5,
+	}
+}
+
 func (s *service) runTask(ctx context.Context, t *task) {
 	if t.callBacker != nil {
-		t.callBacker.Do(t.resultMsgCh)
+		go func() {
+			t.callBacker.Do(t.resultMsgCh)
+		}()
+
 	}
 	var cancel context.CancelFunc
 	if t.timeout > 0 {
@@ -71,8 +82,7 @@ func (s *service) Run(ctx context.Context) {
 	}
 }
 
-func NewDefaultService(m sensitivematcher.SensitiveMatcher) Service {
-	return &service{
-		m: m,
-	}
+func (s *service) RunOneTask(ctx context.Context) {
+	v := <-s.taskCh
+	s.runTask(ctx, v)
 }

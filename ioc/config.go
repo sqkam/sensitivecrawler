@@ -7,12 +7,10 @@ import (
 
 func InitConfig() config.Config {
 	var conf config.Config
-	v := viper.New()
-	v.SetConfigFile("./config.yaml")
-	if err := v.ReadInConfig(); err != nil {
+	if err := viper.ReadInConfig(); err != nil {
 		panic(err)
 	}
-	if err := v.Unmarshal(&conf); err != nil {
+	if err := viper.Unmarshal(&conf); err != nil {
 		panic(err)
 	}
 

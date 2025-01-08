@@ -37,6 +37,7 @@ func WithMaxDepth(d int) TaskOption {
 	})
 }
 
+// MaxBodySize  UserAgent AllowedDomains URLFilters MaxBodySize CacheDir
 func WithCollyCollector(c *colly.Collector) TaskOption {
 	return TaskOptionOptionFunc(func(t *task) {
 		c.Async = true

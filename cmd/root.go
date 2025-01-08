@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"fmt"
+	"context"
 	"os"
 
 	"github.com/spf13/viper"
@@ -19,9 +19,7 @@ var (
 		Use:   "sensitivecrawler",
 		Short: appDesc,
 		Long:  appDesc + "long",
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("%v\n", "asdfasdf")
-		},
+		Run:   run,
 	}
 )
 
@@ -49,9 +47,30 @@ func initConfig() {
 	}
 }
 
+func run(cmd *cobra.Command, args []string) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	s := InitSensitiveCrawler()
+	s.AddTask("https://zgo.sqkam.cfd")
+
+	s.RunOneTask(ctx)
+}
+
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
 		os.Exit(1)
 	}
 }
+
+//func main() {
+//	quit := make(chan os.Signal)
+//	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+//	ctx, cancel := context.WithCancel(context.Background())
+//	defer cancel()
+//	s := InitSensitiveCrawler()
+//	go func() {
+//		s.Run(ctx)
+//	}()
+//	<-quit
+//}
