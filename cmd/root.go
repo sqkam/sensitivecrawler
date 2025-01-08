@@ -108,7 +108,7 @@ func monitorMemory() {
 
 func run(cmd *cobra.Command, args []string) {
 	go monitorMemory()
-
+	startTime := time.Now()
 	if len(args) < 1 {
 		cmd.Help()
 		return
@@ -146,6 +146,13 @@ func run(cmd *cobra.Command, args []string) {
 	defer memLock.Unlock()
 	maxMemMB := float64(maxMem) / float64(1024*1024) // 将 bytes 转换为 MB
 	fmt.Printf("最大内存使用量: %.2f MB\n", maxMemMB)
+	endTime := time.Now() // 记录结束时间
+
+	duration := endTime.Sub(startTime) // 计算时间差
+
+	durationInSeconds := duration.Seconds() // 将时间差转换为秒
+
+	fmt.Printf("程序运行时间: %.2f 秒\n", durationInSeconds)
 }
 
 func Execute() {

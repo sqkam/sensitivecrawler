@@ -192,6 +192,7 @@ func (t *task) Run(ctx context.Context) {
 	t.c.OnRequest(func(r *colly.Request) {
 		atomic.AddInt64(&t.urlCount, 1)
 		link := r.URL.String()
+		color.New(color.BgGreen).Println("try visit", "-->", link)
 		if url == link {
 			t.HtmlAnalyze(ctx, link)
 		}
