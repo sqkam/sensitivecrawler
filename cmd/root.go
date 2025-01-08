@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -80,7 +79,8 @@ func initConfig() {
 
 func run(cmd *cobra.Command, args []string) {
 	if len(args) < 1 {
-		panic(errors.New("please input site"))
+		cmd.Help()
+		return
 	}
 	site = args[0]
 	ctx, cancel := context.WithCancel(context.Background())
