@@ -2,6 +2,7 @@ package sensitivecrawler
 
 import (
 	"context"
+	"fmt"
 	"net/url"
 	"time"
 
@@ -49,6 +50,10 @@ func (s *service) runTask(ctx context.Context, t *task) {
 		SensitiveCount: t.sensitiveCount,
 		// MemoryTotal:
 	}}
+	fmt.Printf("统计信息%#v\n", &result.Statistics{
+		UrlCount:       t.urlCount,
+		SensitiveCount: t.sensitiveCount,
+	})
 	close(t.resultMsgCh)
 }
 
@@ -62,6 +67,7 @@ func (s *service) AddTask(site string, options ...TaskOption) {
 		return
 	}
 	c.AllowedDomains = []string{u.Hostname()}
+	_ = u
 
 	t := &task{
 		site:        site,

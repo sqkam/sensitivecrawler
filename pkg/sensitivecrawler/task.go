@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 	"sync/atomic"
@@ -101,15 +102,16 @@ func (t *task) Analyze(ctx context.Context, url string) {
 
 func (t *task) HtmlAnalyze(ctx context.Context, url string) {
 	fmt.Println("Analyzing --> ", url)
-
 	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	// get the html body
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
+		log.Println("HtmlAnalyze NewRequestWithContext error ", err.Error())
 		return
 	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
+		log.Println("HtmlAnalyze  http.DefaultClient.Do error ", err.Error())
 		return
 	}
 	// Closure
@@ -142,7 +144,18 @@ func (t *task) Run(ctx context.Context) {
 	} else {
 		name = parser.GetDomain(url)
 	}
-
+	t.c.OnHTML("a[href]", func(e *colly.HTMLElement) {
+		link := e.Attr("href")
+		if link == "" {
+			return
+		}
+		// Print link
+		fmt.Printf("Link found: %q -> %s\n", e.Text, link)
+		// Visit link found on page
+		// Only those links are visited which are in AllowedDomains
+		err := t.c.Visit(e.Request.AbsoluteURL(link))
+		fmt.Printf("%v\n", err)
+	})
 	// search for all link tags that have a rel attribute that is equal to stylesheet - CSS
 	t.c.OnHTML("link[rel='stylesheet']", func(e *colly.HTMLElement) {
 		// hyperlink reference
