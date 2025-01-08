@@ -59,13 +59,14 @@ func WithTimeOut(t int64) TaskOption {
 }
 
 type task struct {
-	site        string
-	callBacker  callbacker.CallBacker
-	m           sensitivematcher.SensitiveMatcher
-	resultMsgCh chan result.Result
-	c           *colly.Collector
-	urlCount    int64
-	timeout     int64
+	site           string
+	callBacker     callbacker.CallBacker
+	m              sensitivematcher.SensitiveMatcher
+	resultMsgCh    chan result.Result
+	c              *colly.Collector
+	urlCount       int64
+	sensitiveCount int64
+	timeout        int64
 }
 
 func (t *task) Analyze(ctx context.Context, url string) {
@@ -86,9 +87,13 @@ func (t *task) Analyze(ctx context.Context, url string) {
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err == nil {
-		matchStr, ok := t.m.Match(respBody, url)
-		if ok {
-			t.resultMsgCh <- result.Result{Site: t.site, Url: url, Info: matchStr}
+		matchStrings := t.m.Match(respBody, url)
+		if len(matchStrings) > 0 {
+			atomic.AddInt64(&t.sensitiveCount, int64(len(matchStrings)))
+			for _, matchStr := range matchStrings {
+				t.resultMsgCh <- result.Result{Url: url, Info: matchStr}
+			}
+
 		}
 
 	}
@@ -110,9 +115,13 @@ func (t *task) HtmlAnalyze(ctx context.Context, url string) {
 	defer resp.Body.Close()
 	respBody, err := io.ReadAll(resp.Body)
 	if err == nil {
-		matchStr, ok := t.m.Match(respBody, url)
-		if ok {
-			t.resultMsgCh <- result.Result{Url: url, Info: matchStr}
+		matchStrings := t.m.Match(respBody, url)
+		if len(matchStrings) > 0 {
+			atomic.AddInt64(&t.sensitiveCount, int64(len(matchStrings)))
+			for _, matchStr := range matchStrings {
+				t.resultMsgCh <- result.Result{Url: url, Info: matchStr}
+			}
+
 		}
 	}
 }

@@ -13,6 +13,8 @@ type Result struct {
 
 type Statistics struct {
 	UrlCount int64 `json:"url_count,omitempty"`
+	// 敏感点数量
+	SensitiveCount int64 `json:"sensitive_count,omitempty"`
 	// 内存用量
 	MemoryTotal int64 `json:"memory_total,omitempty"`
 }

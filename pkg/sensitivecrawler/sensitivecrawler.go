@@ -32,7 +32,6 @@ func (s *service) runTask(ctx context.Context, t *task) {
 		go func() {
 			t.callBacker.Do(t.resultMsgCh)
 		}()
-
 	}
 	var cancel context.CancelFunc
 	if t.timeout > 0 {
@@ -42,7 +41,8 @@ func (s *service) runTask(ctx context.Context, t *task) {
 	t.Run(ctx)
 	// 统计信息
 	t.resultMsgCh <- result.Result{Site: t.site, Url: "", Info: "", Statistics: &result.Statistics{
-		UrlCount: t.urlCount,
+		UrlCount:       t.urlCount,
+		SensitiveCount: t.sensitiveCount,
 		// MemoryTotal:
 	}}
 	close(t.resultMsgCh)

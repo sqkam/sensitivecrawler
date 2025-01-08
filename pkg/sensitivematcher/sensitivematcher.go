@@ -20,15 +20,15 @@ type sensitiveMatcher struct {
 	rules []config.Rule
 }
 
-func (m *sensitiveMatcher) Match(b []byte, name string) (string, bool) {
+func (m *sensitiveMatcher) Match(b []byte, name string) []string {
 	var eg errgroup.Group
-	var result string
-	var matchAny bool
+	var result []string
+
 	strCh := make(chan string, 10)
 	waitStrCh := make(chan struct{}, 1)
 	go func() {
 		for v := range strCh {
-			result = v
+			result = append(result, v)
 		}
 		waitStrCh <- struct{}{}
 	}()
@@ -42,7 +42,6 @@ func (m *sensitiveMatcher) Match(b []byte, name string) (string, bool) {
 			}
 			if match != nil && match.GroupCount() > v.GroupIdx {
 				strCh <- fmt.Sprintln(name, " 发现敏感信息 ", v.Name, ": ", match.Groups()[v.GroupIdx].String())
-				matchAny = true
 			}
 			return nil
 		})
@@ -51,7 +50,7 @@ func (m *sensitiveMatcher) Match(b []byte, name string) (string, bool) {
 	close(strCh)
 	<-waitStrCh
 	close(waitStrCh)
-	return result, matchAny
+	return result
 }
 
 func NewDefaultMatcher(c config.Config) SensitiveMatcher {
