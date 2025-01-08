@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/spf13/viper"
@@ -34,6 +36,7 @@ var appAboutLong = fmt.Sprintf("%s\n%s", appLogo, appDesc)
 var (
 	cfgFile                              string
 	depth                                int64
+	timeout                              int64
 	allowedDomains                       string
 	site                                 string
 	httpCallBackerUrl                    string
@@ -58,7 +61,8 @@ func init() {
 func initFlags() {
 	rootCmd.PersistentFlags().StringVarP(&cfgFile, "conf", "c", "", "path of config file")
 	rootCmd.PersistentFlags().StringVarP(&allowedDomains, "allowedDomains", "d", "", "allowedDomains separated by commas")
-	rootCmd.PersistentFlags().Int64VarP(&depth, "depth", "", 0, "allowedDomains separated by commas")
+	rootCmd.PersistentFlags().Int64VarP(&depth, "depth", "", 0, "depth")
+	rootCmd.PersistentFlags().Int64VarP(&timeout, "timeout", "t", 0, "timeout second")
 	rootCmd.PersistentFlags().StringVarP(&httpCallBackerUrl, "httpCallBackerUrl", "", "", "httpCallBackerUrl")
 	rootCmd.PersistentFlags().StringVarP(&retryableHttpCallBackerUrl, "retryableHttpCallBackerUrl", "", "", "retryableHttpCallBackerUrl")
 	rootCmd.PersistentFlags().Int64VarP(&retryableHttpCallBackerRetryCount, "retryableHttpCallBackerRetryCount", "", 3, "set retryableHttpCallBackerRetryCount second")
@@ -78,7 +82,33 @@ func initConfig() {
 	}
 }
 
+var (
+	maxMem  uint64     // 最大内存使用量(bytes)
+	memLock sync.Mutex // 用于保护 maxMem 的互斥锁
+)
+
+// updateMaxMemory 更新最大内存使用量
+func updateMaxMemory(memStats runtime.MemStats) {
+	memLock.Lock()
+	defer memLock.Unlock()
+	if memStats.Alloc > maxMem {
+		maxMem = memStats.Alloc
+	}
+}
+
+// monitorMemory 持续监控内存使用
+func monitorMemory() {
+	var memStats runtime.MemStats
+	for {
+		runtime.ReadMemStats(&memStats)
+		updateMaxMemory(memStats)
+		time.Sleep(1 * time.Millisecond) // 控制监控频率，可以调整
+	}
+}
+
 func run(cmd *cobra.Command, args []string) {
+	go monitorMemory()
+
 	if len(args) < 1 {
 		cmd.Help()
 		return
@@ -94,6 +124,9 @@ func run(cmd *cobra.Command, args []string) {
 	if depth > 0 {
 		options = append(options, sensitivecrawler.WithMaxDepth(int(depth)))
 	}
+	if timeout > 0 {
+		options = append(options, sensitivecrawler.WithTimeOut(timeout))
+	}
 	if httpCallBackerUrl != "" {
 		options = append(options, sensitivecrawler.WithCallBacker(httpcallbacker.New(httpCallBackerUrl)))
 	}
@@ -108,6 +141,11 @@ func run(cmd *cobra.Command, args []string) {
 	s.AddTask(site, options...)
 
 	s.RunOneTask(ctx)
+
+	memLock.Lock()
+	defer memLock.Unlock()
+	maxMemMB := float64(maxMem) / float64(1024*1024) // 将 bytes 转换为 MB
+	fmt.Printf("最大内存使用量: %.2f MB\n", maxMemMB)
 }
 
 func Execute() {
