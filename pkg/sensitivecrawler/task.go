@@ -99,7 +99,7 @@ func (t *task) Analyze(ctx context.Context, url string) {
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err == nil {
-		matchStrings := t.m.Match(respBody)
+		matchStrings := t.m.Match(ctx, respBody)
 		if len(matchStrings) > 0 {
 			atomic.AddInt64(&t.sensitiveCount, int64(len(matchStrings)))
 			for _, matchStr := range matchStrings {
@@ -130,7 +130,7 @@ func (t *task) HtmlAnalyze(ctx context.Context, url string) {
 	defer resp.Body.Close()
 	respBody, err := io.ReadAll(resp.Body)
 	if err == nil {
-		matchStrings := t.m.Match(respBody)
+		matchStrings := t.m.Match(ctx, respBody)
 		if len(matchStrings) > 0 {
 			atomic.AddInt64(&t.sensitiveCount, int64(len(matchStrings)))
 			for _, matchStr := range matchStrings {
@@ -145,6 +145,12 @@ func (t *task) Run(ctx context.Context) {
 	url := t.site
 
 	t.c.OnHTML("a[href]", func(e *colly.HTMLElement) {
+		select {
+		case <-ctx.Done():
+			// timeout return
+			return
+		default:
+		}
 		link := e.Attr("href")
 		if link == "" {
 			return
@@ -158,6 +164,12 @@ func (t *task) Run(ctx context.Context) {
 	})
 	// search for all link tags that have a rel attribute that is equal to stylesheet - CSS
 	t.c.OnHTML("link[rel='stylesheet']", func(e *colly.HTMLElement) {
+		select {
+		case <-ctx.Done():
+			// timeout return
+			return
+		default:
+		}
 		// hyperlink reference
 		link := e.Attr("href")
 		color.New(color.FgYellow).Println("Css found", "-->", link)
@@ -167,6 +179,12 @@ func (t *task) Run(ctx context.Context) {
 
 	// search for all script tags with src attribute -- JS
 	t.c.OnHTML("script[src]", func(e *colly.HTMLElement) {
+		select {
+		case <-ctx.Done():
+			// timeout return
+			return
+		default:
+		}
 		// src attribute
 		link := e.Attr("src")
 		// Print link
@@ -177,6 +195,12 @@ func (t *task) Run(ctx context.Context) {
 
 	// serach for all img tags with src attribute -- Images
 	t.c.OnHTML("img[src]", func(e *colly.HTMLElement) {
+		select {
+		case <-ctx.Done():
+			// timeout return
+			return
+		default:
+		}
 		// src attribute
 		link := e.Attr("src")
 		if strings.HasPrefix(link, "data:image") || strings.HasPrefix(link, "blob:") {
@@ -190,6 +214,12 @@ func (t *task) Run(ctx context.Context) {
 
 	// Before making a request
 	t.c.OnRequest(func(r *colly.Request) {
+		select {
+		case <-ctx.Done():
+			// timeout return
+			return
+		default:
+		}
 		atomic.AddInt64(&t.urlCount, 1)
 		link := r.URL.String()
 		color.New(color.BgGreen).Println("try visit", "-->", link)

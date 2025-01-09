@@ -1,6 +1,7 @@
 package sensitivematcher
 
 import (
+	"context"
 	"fmt"
 
 	regexp "github.com/dlclark/regexp2"
@@ -20,7 +21,7 @@ type sensitiveMatcher struct {
 	rules []config.Rule
 }
 
-func (m *sensitiveMatcher) Match(b []byte) []string {
+func (m *sensitiveMatcher) Match(ctx context.Context, b []byte) []string {
 	var eg errgroup.Group
 	var result []string
 
@@ -35,6 +36,12 @@ func (m *sensitiveMatcher) Match(b []byte) []string {
 	for _, v := range m.rules {
 		v := v
 		eg.Go(func() error {
+			select {
+			case <-ctx.Done():
+				return nil
+			default:
+
+			}
 			exp := regexp.MustCompile(v.Exp, regexp.None)
 			match, err := exp.FindStringMatch(string(b))
 			if err != nil {
