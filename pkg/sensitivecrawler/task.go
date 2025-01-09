@@ -72,9 +72,11 @@ type task struct {
 	m              sensitivematcher.SensitiveMatcher
 	resultMsgCh    chan result.Result
 	c              *colly.Collector
-	urlCount       int64
-	sensitiveCount int64
 	timeout        int64
+	urlCount       int64
+	analyzeCount   int64
+	analyzeBytes   int64
+	sensitiveCount int64
 }
 
 func (t *task) Analyze(ctx context.Context, url string) {
@@ -96,9 +98,11 @@ func (t *task) Analyze(ctx context.Context, url string) {
 	}
 	// Closure
 	defer resp.Body.Close()
+	atomic.AddInt64(&t.analyzeCount, 1)
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err == nil {
+		atomic.AddInt64(&t.analyzeBytes, int64(len(respBody)))
 		matchStrings := t.m.Match(ctx, respBody)
 		if len(matchStrings) > 0 {
 			atomic.AddInt64(&t.sensitiveCount, int64(len(matchStrings)))

@@ -16,5 +16,7 @@ type Statistics struct {
 	// 敏感点数量
 	SensitiveCount int64 `json:"sensitive_count,omitempty"`
 	// 内存用量
-	MemoryTotal int64 `json:"memory_total,omitempty"`
+	MemoryTotal  int64 `json:"memory_total,omitempty"`
+	AnalyzeCount int64 `json:"analyze_count,omitempty"`
+	AnalyzeBytes int64 `json:"analyze_bytes,omitempty"`
 }

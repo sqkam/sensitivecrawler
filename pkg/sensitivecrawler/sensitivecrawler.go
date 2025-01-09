@@ -54,6 +54,8 @@ func (s *service) runTask(ctx context.Context, t *task) {
 	fmt.Printf("统计信息%#v\n", &result.Statistics{
 		UrlCount:       t.urlCount,
 		SensitiveCount: t.sensitiveCount,
+		AnalyzeCount:   t.analyzeCount,
+		AnalyzeBytes:   t.analyzeBytes,
 	})
 	close(t.resultMsgCh)
 }
