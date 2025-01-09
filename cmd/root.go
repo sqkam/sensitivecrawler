@@ -137,7 +137,7 @@ func run(cmd *cobra.Command, args []string) {
 			retryablehttpcallbacker.WithRetryInterval(time.Duration(retryableHttpCallBackerRetryInterval)*time.Second),
 		)))
 	}
-
+	options = append(options, sensitivecrawler.WithCallBacker(httpcallbacker.New(httpCallBackerUrl)))
 	s.AddTask(site, options...)
 
 	s.RunOneTask(ctx)

@@ -51,11 +51,12 @@ func (s *service) runTask(ctx context.Context, t *task) {
 		SensitiveCount: t.sensitiveCount,
 		// MemoryTotal:
 	}}
+
 	fmt.Printf("统计信息%#v\n", &result.Statistics{
 		UrlCount:       t.urlCount,
 		SensitiveCount: t.sensitiveCount,
 		AnalyzeCount:   t.analyzeCount,
-		AnalyzeBytes:   t.analyzeBytes,
+		AnalyzeBytes:   t.analyzeBytes / (1024 * 1024),
 	})
 	close(t.resultMsgCh)
 }

@@ -7,21 +7,13 @@ import (
 	regexp "github.com/dlclark/regexp2"
 	"github.com/sqkam/sensitivecrawler/config"
 )
-import "github.com/fatih/color"
 
-var (
-	greenWriter   = color.New(color.FgGreen).SprintFunc()
-	yellowWriter  = color.New(color.FgYellow).SprintFunc()
-	redWriter     = color.New(color.FgRed).SprintFunc()
-	defaultWriter = color.New().SprintFunc()
-)
-
-type sensitiveMatcher struct {
+type asyncSensitiveMatcher struct {
 	rules []config.Rule
 	exps  []*regexp.Regexp
 }
 
-func (m *sensitiveMatcher) Match(ctx context.Context, b []byte) []string {
+func (m *asyncSensitiveMatcher) Match(ctx context.Context, b []byte) []string {
 	var result []string
 
 	strCh := make(chan string, 10)
@@ -30,7 +22,7 @@ func (m *sensitiveMatcher) Match(ctx context.Context, b []byte) []string {
 		for i, v := range m.rules {
 			select {
 			case <-ctx.Done():
-				return
+				continue
 			default:
 			}
 			exp := m.exps[i]
@@ -51,8 +43,8 @@ func (m *sensitiveMatcher) Match(ctx context.Context, b []byte) []string {
 	return result
 }
 
-func NewDefaultMatcher(c config.Config) SensitiveMatcher {
-	s := &sensitiveMatcher{
+func NewAsyncSensitiveMatcher(c config.Config) SensitiveMatcher {
+	s := &asyncSensitiveMatcher{
 		rules: c.Rules,
 	}
 	exps := make([]*regexp.Regexp, len(s.rules))

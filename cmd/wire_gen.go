@@ -9,14 +9,13 @@ package cmd
 import (
 	"github.com/sqkam/sensitivecrawler/ioc"
 	"github.com/sqkam/sensitivecrawler/pkg/sensitivecrawler"
-	"github.com/sqkam/sensitivecrawler/pkg/sensitivematcher"
 )
 
 // Injectors from wire.go:
 
 func InitSensitiveCrawler() sensitivecrawler.Service {
 	config := ioc.InitConfig()
-	sensitiveMatcher := sensitivematcher.NewDefaultMatcher(config)
+	sensitiveMatcher := ioc.InitSensitiveMatcher(config)
 	service := sensitivecrawler.NewDefaultService(config, sensitiveMatcher)
 	return service
 }
