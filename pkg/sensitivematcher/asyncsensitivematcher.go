@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"golang.org/x/sync/errgroup"
+
 	regexp "github.com/dlclark/regexp2"
 	"github.com/sqkam/sensitivecrawler/config"
 )
@@ -14,32 +16,42 @@ type asyncSensitiveMatcher struct {
 }
 
 func (m *asyncSensitiveMatcher) Match(ctx context.Context, b []byte) []string {
+	var eg errgroup.Group
 	var result []string
 
 	strCh := make(chan string, 10)
-
+	waitStrCh := make(chan struct{}, 1)
 	go func() {
-		for i, v := range m.rules {
+		for v := range strCh {
+			result = append(result, v)
+		}
+		waitStrCh <- struct{}{}
+	}()
+	for i, v := range m.rules {
+		v := v
+		i := i
+		eg.Go(func() error {
 			select {
 			case <-ctx.Done():
-				continue
+				return nil
 			default:
+
 			}
 			exp := m.exps[i]
 			match, err := exp.FindStringMatch(string(b))
 			if err != nil {
-				continue
+				return nil
 			}
 			if match != nil && match.GroupCount() > v.GroupIdx {
 				strCh <- fmt.Sprintf("发现敏感信息 %s: %s", v.Name, match.Groups()[v.GroupIdx].String())
 			}
-		}
-		close(strCh)
-	}()
-
-	for v := range strCh {
-		result = append(result, v)
+			return nil
+		})
 	}
+	_ = eg.Wait()
+	close(strCh)
+	<-waitStrCh
+	close(waitStrCh)
 	return result
 }
 

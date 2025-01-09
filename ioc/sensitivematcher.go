@@ -6,5 +6,5 @@ import (
 )
 
 func InitSensitiveMatcher(c config.Config) sensitivematcher.SensitiveMatcher {
-	return sensitivematcher.NewAsyncSensitiveMatcher(c)
+	return sensitivematcher.NewDefaultMatcher(c)
 }
