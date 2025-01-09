@@ -30,7 +30,7 @@ func (m *sensitiveMatcher) Match(ctx context.Context, b []byte) []string {
 		for i, v := range m.rules {
 			select {
 			case <-ctx.Done():
-				return
+				continue
 			default:
 			}
 			exp := m.exps[i]
