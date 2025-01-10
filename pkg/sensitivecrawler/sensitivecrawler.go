@@ -11,8 +11,8 @@ import (
 
 	"github.com/sqkam/sensitivecrawler/config"
 
-	"github.com/sqkam/colly/v2"
-	"github.com/sqkam/colly/v2/extensions"
+	"github.com/gocolly/colly/v2"
+	"github.com/gocolly/colly/v2/extensions"
 
 	"github.com/sqkam/sensitivecrawler/pkg/sensitivecrawler/result"
 	"github.com/sqkam/sensitivecrawler/pkg/sensitivematcher"

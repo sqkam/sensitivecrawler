@@ -8,3 +8,6 @@ build:
 run:
 	make build
 	./sensitivecrawler
+builddebug:
+	make format
+	go build -tags debug -o sensitivecrawlerdebug -ldflags '-w -s' -trimpath github.com/sqkam/sensitivecrawler

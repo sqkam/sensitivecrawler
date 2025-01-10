@@ -2,4 +2,4 @@
 
 package features
 
-const DebugMode = true
+const Debug = true

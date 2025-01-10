@@ -52,6 +52,7 @@ var (
 		Short: appDesc,
 		Long:  appAboutLong,
 		Run:   run,
+		Args:  cobra.MinimumNArgs(1),
 	}
 )
 
@@ -111,8 +112,8 @@ func monitorMemory() {
 }
 
 func run(cmd *cobra.Command, args []string) {
+	go monitorMemory()
 	if features.Debug {
-		go monitorMemory()
 		go func() {
 			log.Println(http.ListenAndServe("0.0.0.0:10000", nil))
 		}()
@@ -149,19 +150,18 @@ func run(cmd *cobra.Command, args []string) {
 
 	s.RunOneTask(ctx)
 
-	memLock.Lock()
-	defer memLock.Unlock()
-	maxMemMB := float64(maxMem) / float64(1024*1024) // 将 bytes 转换为 MB
-	fmt.Printf("最大内存使用量: %.2f MB\n", maxMemMB)
-	endTime := time.Now() // 记录结束时间
-
-	duration := endTime.Sub(startTime) // 计算时间差
-
-	durationInSeconds := duration.Seconds() // 将时间差转换为秒
-
-	fmt.Printf("程序运行时间: %.2f 秒\n", durationInSeconds)
-
 	if features.Debug {
+		memLock.Lock()
+		defer memLock.Unlock()
+		maxMemMB := float64(maxMem) / float64(1024*1024) // 将 bytes 转换为 MB
+		fmt.Printf("最大内存使用量: %.2f MB\n", maxMemMB)
+		endTime := time.Now() // 记录结束时间
+
+		duration := endTime.Sub(startTime) // 计算时间差
+
+		durationInSeconds := duration.Seconds() // 将时间差转换为秒
+
+		fmt.Printf("程序运行时间: %.2f 秒\n", durationInSeconds)
 		time.Sleep(time.Second * 100)
 	}
 }
