@@ -96,6 +96,7 @@ func (t *task) Analyze(ctx context.Context, url string) {
 		return
 
 	}
+
 	// Closure
 	defer resp.Body.Close()
 	atomic.AddInt64(&t.analyzeCount, 1)

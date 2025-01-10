@@ -3,6 +3,9 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"log"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"runtime"
 	"strings"
@@ -48,6 +51,7 @@ var (
 		Short: appDesc,
 		Long:  appAboutLong,
 		Run:   run,
+		Args:  cobra.MinimumNArgs(1),
 	}
 )
 
@@ -108,16 +112,18 @@ func monitorMemory() {
 
 func run(cmd *cobra.Command, args []string) {
 	go monitorMemory()
+
+	go func() {
+		log.Println(http.ListenAndServe("0.0.0.0:10000", nil))
+	}()
+
 	startTime := time.Now()
-	if len(args) < 1 {
-		cmd.Help()
-		return
-	}
+
 	site = args[0]
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	s := InitSensitiveCrawler()
-	options := []sensitivecrawler.TaskOption{}
+	var options []sensitivecrawler.TaskOption
 
 	options = append(options, sensitivecrawler.WithAllowedDomains(strings.Split(allowedDomains, ",")))
 
@@ -153,6 +159,7 @@ func run(cmd *cobra.Command, args []string) {
 	durationInSeconds := duration.Seconds() // 将时间差转换为秒
 
 	fmt.Printf("程序运行时间: %.2f 秒\n", durationInSeconds)
+	//time.Sleep(time.Second * 100)
 }
 
 func Execute() {
