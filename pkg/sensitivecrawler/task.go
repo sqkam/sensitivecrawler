@@ -1,6 +1,7 @@
 package sensitivecrawler
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"sync"
 	"sync/atomic"
 
 	"github.com/fatih/color"
@@ -66,6 +68,12 @@ func WithTimeOut(t int64) TaskOption {
 	})
 }
 
+var pool = sync.Pool{
+	New: func() interface{} {
+		return bytes.NewBuffer(make([]byte, 0, 64*1024))
+	},
+}
+
 type task struct {
 	site           string
 	callBacker     callbacker.CallBacker
@@ -100,11 +108,15 @@ func (t *task) Analyze(ctx context.Context, url string) {
 	// Closure
 	defer resp.Body.Close()
 	atomic.AddInt64(&t.analyzeCount, 1)
-
-	respBody, err := io.ReadAll(resp.Body)
+	bf := pool.Get().(*bytes.Buffer)
+	defer func() {
+		bf.Reset()
+		pool.Put(bf)
+	}()
+	_, err = io.Copy(bf, resp.Body)
 	if err == nil {
-		atomic.AddInt64(&t.analyzeBytes, int64(len(respBody)))
-		matchStrings := t.m.Match(ctx, respBody)
+		atomic.AddInt64(&t.analyzeBytes, int64(bf.Len()))
+		matchStrings := t.m.Match(ctx, bf.Bytes())
 		if len(matchStrings) > 0 {
 			atomic.AddInt64(&t.sensitiveCount, int64(len(matchStrings)))
 			for _, matchStr := range matchStrings {
@@ -112,7 +124,6 @@ func (t *task) Analyze(ctx context.Context, url string) {
 			}
 
 		}
-
 	}
 }
 
@@ -133,9 +144,16 @@ func (t *task) HtmlAnalyze(ctx context.Context, url string) {
 	}
 	// Closure
 	defer resp.Body.Close()
-	respBody, err := io.ReadAll(resp.Body)
+	atomic.AddInt64(&t.analyzeCount, 1)
+	bf := pool.Get().(*bytes.Buffer)
+	defer func() {
+		bf.Reset()
+		pool.Put(bf)
+	}()
+	_, err = io.Copy(bf, resp.Body)
 	if err == nil {
-		matchStrings := t.m.Match(ctx, respBody)
+		atomic.AddInt64(&t.analyzeBytes, int64(bf.Len()))
+		matchStrings := t.m.Match(ctx, bf.Bytes())
 		if len(matchStrings) > 0 {
 			atomic.AddInt64(&t.sensitiveCount, int64(len(matchStrings)))
 			for _, matchStr := range matchStrings {

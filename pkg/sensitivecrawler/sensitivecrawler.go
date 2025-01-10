@@ -61,6 +61,7 @@ func (s *service) runTask(ctx context.Context, t *task) {
 	close(t.resultMsgCh)
 }
 
+// NewTask
 func (s *service) AddTask(site string, options ...TaskOption) {
 	// url := "https://zgo.sqkam.cfd"
 	isValid, isValidDomain := parser.ValidateURL(site), parser.ValidateDomain(site)
@@ -78,6 +79,7 @@ func (s *service) AddTask(site string, options ...TaskOption) {
 	c := colly.NewCollector(
 		colly.Async(true),
 	)
+	//c.Limit(&colly.LimitRule{DomainGlob: "*", Parallelism: 5})
 	extensions.RandomUserAgent(c)
 
 	c.AllowedDomains = []string{domain}

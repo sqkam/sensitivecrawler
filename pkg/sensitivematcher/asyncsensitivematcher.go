@@ -39,6 +39,9 @@ func (m *asyncSensitiveMatcher) Match(ctx context.Context, b []byte) []string {
 			}
 			exp := m.exps[i]
 			rb := bytesToRunes(b)
+			defer func() {
+				rb = nil
+			}()
 			match, err := exp.FindRunesMatch(rb)
 			if err != nil {
 				return nil

@@ -36,6 +36,7 @@ func (m *sensitiveMatcher) Match(ctx context.Context, b []byte) []string {
 			exp := m.exps[i]
 			rb := bytesToRunes(b)
 			match, err := exp.FindRunesMatch(rb)
+			rb = nil
 			if err != nil {
 				continue
 			}
