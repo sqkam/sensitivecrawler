@@ -7,7 +7,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"strings"
 	"sync/atomic"
 
 	"github.com/fatih/color"
@@ -195,25 +194,6 @@ func (t *task) Run(ctx context.Context) {
 		link := e.Attr("src")
 		// Print link
 		color.New(color.FgYellow).Println("Js found", "-->", link)
-		// extraction
-		t.Analyze(ctx, e.Request.AbsoluteURL(link))
-	})
-
-	// serach for all img tags with src attribute -- Images
-	t.c.OnHTML("img[src]", func(e *colly.HTMLElement) {
-		select {
-		case <-ctx.Done():
-			// timeout return
-			return
-		default:
-		}
-		// src attribute
-		link := e.Attr("src")
-		if strings.HasPrefix(link, "data:image") || strings.HasPrefix(link, "blob:") {
-			return
-		}
-		// Print link
-		color.New(color.FgYellow).Println("img found", "-->", link)
 		// extraction
 		t.Analyze(ctx, e.Request.AbsoluteURL(link))
 	})

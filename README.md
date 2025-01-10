@@ -1,0 +1,4 @@
+- 支持timeout
+- depth
+- callBacker 
+- 单个节点可以配置并行数和rules
