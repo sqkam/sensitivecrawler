@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/spf13/viper"
+	"github.com/sqkam/sensitivecrawler/constant/features"
 	"github.com/sqkam/sensitivecrawler/pkg/sensitivecrawler"
 	httpcallbacker "github.com/sqkam/sensitivecrawler/pkg/sensitivecrawler/callbacker/http"
 	retryablehttpcallbacker "github.com/sqkam/sensitivecrawler/pkg/sensitivecrawler/callbacker/retryablehttp"
@@ -51,7 +52,6 @@ var (
 		Short: appDesc,
 		Long:  appAboutLong,
 		Run:   run,
-		Args:  cobra.MinimumNArgs(1),
 	}
 )
 
@@ -111,11 +111,12 @@ func monitorMemory() {
 }
 
 func run(cmd *cobra.Command, args []string) {
-	go monitorMemory()
-
-	go func() {
-		log.Println(http.ListenAndServe("0.0.0.0:10000", nil))
-	}()
+	if features.Debug {
+		go monitorMemory()
+		go func() {
+			log.Println(http.ListenAndServe("0.0.0.0:10000", nil))
+		}()
+	}
 
 	startTime := time.Now()
 
@@ -159,7 +160,10 @@ func run(cmd *cobra.Command, args []string) {
 	durationInSeconds := duration.Seconds() // 将时间差转换为秒
 
 	fmt.Printf("程序运行时间: %.2f 秒\n", durationInSeconds)
-	//time.Sleep(time.Second * 100)
+
+	if features.Debug {
+		time.Sleep(time.Second * 100)
+	}
 }
 
 func Execute() {
