@@ -14,7 +14,7 @@ import (
 
 	"github.com/fatih/color"
 
-	"github.com/gocolly/colly/v2"
+	"github.com/sqkam/colly/v2"
 	"github.com/sqkam/sensitivecrawler/pkg/sensitivecrawler/callbacker"
 	"github.com/sqkam/sensitivecrawler/pkg/sensitivecrawler/result"
 	"github.com/sqkam/sensitivecrawler/pkg/sensitivematcher"
